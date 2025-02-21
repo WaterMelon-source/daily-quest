@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Daily Quest System</title>
+		<link rel="stylesheet" href="styles.css" />
+	</head>
+	<body>
+		<header>
+			<img id="warning" src="assets/warning.png" alt="" />
+			<div class="header-text">QUEST INFO</div>
+		</header>
+		<div class="info-text">[Daily Quest: Strength Training has arrived.]</div>
+		<h1>GOAL</h1>
+		<div class="container">
+			<div id="quest-line">
+				<div class="quest">Push-ups</div>
+				<div class="quest value"><span id="pushups">0</span>/100</div>
+				<img id="checkbox" src="assets/check.png" alt="" />
+				<button onclick="updateProgress('pushups', 100)"></button>
+			</div>
+			<div id="quest-line">
+				<div class="quest">Squats</div>
+				<div class="quest value"><span id="squats">0</span>/100</div>
+				<img id="checkbox" src="assets/check.png" alt="" />
+				<button onclick="updateProgress('squats', 100)"></button>
+			</div>
+			<div id="quest-line">
+				<div class="quest">Sit-ups</div>
+				<div class="quest value"><span id="situps">0</span>/100</div>
+				<img id="checkbox" src="assets/check.png" alt="" />
+				<button onclick="updateProgress('situps', 100)"></button>
+			</div>
+		</div>
+
+		<script src="app.js"></script>
+	</body>
+</html>

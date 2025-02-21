@@ -1,0 +1,85 @@
+@import url("https://fonts.googleapis.com/css2?family=Varela+Round&display=swap");
+
+body {
+	background: black;
+	color: #ffffff;
+	font-family: Varela Round, sans-serif;
+	align-items: center;
+	text-align: center;
+	padding: 20px;
+	display: flex;
+	height: 100vh;
+	flex-direction: column;
+	text-shadow: 0 0 10px #00bfff;
+	filter: drop-shadow(0 0 10px #00bfff);
+}
+
+header {
+	display: flex;
+	align-items: center;
+}
+
+#warning {
+	width: 50px;
+	border: 2px solid #ffffff70;
+	margin-right: 15px;
+}
+
+#checkbox {
+	width: 25px;
+	margin-left: 15px;
+	margin-bottom: 2px;
+}
+
+.header-text {
+	padding: 7px 20px;
+	border: 2px solid #ffffff70;
+	font-size: 30px;
+}
+
+.info-text {
+	font-size: 20px;
+	margin-top: 50px;
+}
+
+.container {
+	width: 300px;
+	margin-top: 30px;
+}
+
+#quest-line {
+	display: flex;
+	align-items: center;
+}
+
+.quest {
+	font-size: 20px;
+	margin: 10px 0;
+}
+
+.value {
+	margin-left: auto;
+}
+
+h1 {
+	margin-top: 50px;
+	text-decoration: double underline;
+}
+
+.progress {
+	font-size: 18px;
+}
+
+button {
+	position: fixed;
+	cursor: pointer;
+	background: transparent; /* Makes the background fully transparent */
+	border: 2px solid #00000000; /* Adds a glowing cyan border */
+	font-family: "Arial", sans-serif; /* Font family */
+	cursor: pointer; /* Pointer cursor on hover */
+	border-radius: 5px; /* Rounded corners */
+	transition: all 0.3s ease; /* Smooth transitions */
+	outline: none; /* Removes default outline */
+	width: 90px;
+	height: 25px;
+}
