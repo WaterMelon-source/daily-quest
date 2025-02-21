@@ -63,6 +63,10 @@ function handleMotion(event) {
 	console.log(`Acceleration: x=${x}, y=${y}, z=${z}`);
 	console.log(`Total Acceleration: ${totalAcceleration}`);
 
+	let logc = document.getElementById("console-log");
+
+	logc.textContent = `Acceleration: x=${x}, y=${y}, z=${z} Total Acceleration: ${totalAcceleration}`;
+
 	if (totalAcceleration > threshold && now - lastUpdate > 500) {
 		console.log("Motion detected! Updating progress...");
 		updateProgress("pushups", 100); // Update the counter
