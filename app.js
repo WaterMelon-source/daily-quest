@@ -1,6 +1,6 @@
 // Глобальные переменные для хранения последнего движения
 let lastUpdate = Date.now();
-const threshold = 15; // Чем выше, тем больше нужно движения
+const threshold = 1; // Чем выше, тем больше нужно движения
 
 // Функция обновления прогресса
 function updateProgress(exercise, max) {
