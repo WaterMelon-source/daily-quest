@@ -1,106 +1,124 @@
-// Инициализация переменных
 let video;
 let poseNet;
 let squatCount = 0;
 let isSquatting = false;
 const targetSquats = 100;
+let cameraStream = null; // Для хранения потока камеры
 
-// Подключение к камере
 async function setupCamera() {
-  video = document.createElement('video');
-  video.setAttribute('autoplay', '');
-  video.setAttribute('playsinline', '');
-  video.style.transform = 'scaleX(-1)';
-  video.style.position = 'fixed';
-  video.style.top = '20px';
-  video.style.right = '20px';
-  video.style.width = '320px';
-  video.style.height = '240px';
-  document.body.appendChild(video);
-
-  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-  video.srcObject = stream;
-  
-  return new Promise(resolve => {
-    video.onloadedmetadata = () => {
-      video.play();
-      resolve(video);
-    };
-  });
-}
-
-// Загрузка модели PoseNet
-async function loadPoseNetModel() {
-  return posenet.load({
-    architecture: 'MobileNetV1',
-    outputStride: 16,
-    inputResolution: { width: 640, height: 480 },
-    multiplier: 0.75
-  });
-}
-
-// Расчет угла колена
-function calculateKneeAngle(hip, knee, ankle) {
-  const hipKnee = Math.atan2(knee.y - hip.y, knee.x - hip.x);
-  const kneeAnkle = Math.atan2(ankle.y - knee.y, ankle.x - knee.x);
-  return (hipKnee - kneeAnkle) * (180 / Math.PI);
-}
-
-// Основная функция отслеживания
-async function trackSquats() {
-  const pose = await poseNet.estimateSinglePose(video);
-  
-  const leftHip = pose.keypoints.find(kp => kp.part === 'leftHip');
-  const leftKnee = pose.keypoints.find(kp => kp.part === 'leftKnee');
-  const leftAnkle = pose.keypoints.find(kp => kp.part === 'leftAnkle');
-
-  if (leftHip.score > 0.5 && leftKnee.score > 0.5 && leftAnkle.score > 0.5) {
-    const angle = calculateKneeAngle(leftHip.position, leftKnee.position, leftAnkle.position);
-    
-    // Логика подсчета приседаний
-    if (angle < 90 && !isSquatting) {
-      isSquatting = true;
-      squatCount = Math.min(squatCount + 1, targetSquats);
-      updateProgress('squats', squatCount);
-    } else if (angle > 120) {
-      isSquatting = false;
+  try {
+    // Удаляем предыдущий элемент видео если существует
+    if (video) {
+      document.body.removeChild(video);
+      if (cameraStream) {
+        const tracks = cameraStream.getTracks();
+        tracks.forEach(track => track.stop());
+      }
     }
+
+    video = document.createElement('video');
+    video.setAttribute('autoplay', '');
+    video.setAttribute('playsinline', '');
+    video.style.transform = 'scaleX(-1)';
+    video.style.position = 'fixed';
+    video.style.top = '20px';
+    video.style.right = '20px';
+    video.style.width = '320px';
+    video.style.height = '240px';
+    document.body.appendChild(video);
+
+    cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = cameraStream;
+
+    return new Promise((resolve, reject) => {
+      video.onloadedmetadata = () => {
+        video.play()
+          .then(() => resolve(video))
+          .catch(err => reject(err));
+      };
+      video.onerror = (e) => {
+        reject(`Ошибка воспроизведения видео: ${e}`);
+      };
+    });
+
+  } catch (err) {
+    console.error('Ошибка доступа к камере:', err);
+    throw err; // Пробрасываем ошибку дальше
   }
-  
-  requestAnimationFrame(trackSquats);
 }
 
-// Инициализация приложения
+async function loadPoseNetModel() {
+  try {
+    return await posenet.load({
+      architecture: 'MobileNetV1',
+      outputStride: 16,
+      inputResolution: { width: 640, height: 480 },
+      multiplier: 0.75
+    });
+  } catch (err) {
+    console.error('Ошибка загрузки модели:', err);
+    throw err;
+  }
+}
+
+async function trackSquats() {
+  try {
+    const pose = await poseNet.estimateSinglePose(video);
+    // ... (оставьте существующую логику обработки позы)
+    
+    requestAnimationFrame(trackSquats);
+  } catch (err) {
+    console.error('Ошибка трекинга:', err);
+    // Перезапускаем систему при ошибке
+    cleanup();
+    showError('Ошибка трекинга. Перезагрузите страницу.');
+  }
+}
+
+function cleanup() {
+  if (video) {
+    document.body.removeChild(video);
+    video = null;
+  }
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+  }
+  poseNet = null;
+}
+
+function showError(message) {
+  const errorDiv = document.createElement('div');
+  errorDiv.style.color = 'red';
+  errorDiv.style.position = 'fixed';
+  errorDiv.style.bottom = '20px';
+  errorDiv.style.right = '20px';
+  errorDiv.textContent = message;
+  document.body.appendChild(errorDiv);
+}
+
 async function init() {
+  cleanup(); // Очистка предыдущих ресурсов
+  
   try {
     video = await setupCamera();
     poseNet = await loadPoseNetModel();
-    trackSquats();
+    await trackSquats(); // Начинаем трекинг
   } catch (err) {
-    console.error('Ошибка инициализации:', err);
-    alert('Не удалось получить доступ к камере или загрузить модель');
+    console.error('Инициализация не удалась:', err);
+    showError('Не удалось инициализировать систему. Проверьте доступ к камере и перезагрузите страницу.');
   }
 }
 
-// Функция обновления прогресса
-function updateProgress(exercise, current) {
-  const progressElement = document.getElementById(exercise);
-  if (progressElement) {
-    progressElement.textContent = current;
-    
-    // Добавляем анимацию для чекбокса при достижении цели
-    if (exercise === 'squats' && current >= targetSquats) {
-      const checkbox = document.querySelector(`#quest-line:nth-child(2) #checkbox`);
-      checkbox.style.opacity = 1;
-      checkbox.style.transform = 'scale(1.2)';
-    }
+// Перезапуск по клику на ошибку
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('error-message')) {
+    init();
   }
-}
+});
 
-// Запуск при загрузке страницы
+// При первой загрузке
 document.addEventListener('DOMContentLoaded', () => {
   init();
-  
-  // Инициализация начальных значений
   updateProgress('squats', 0);
 });
