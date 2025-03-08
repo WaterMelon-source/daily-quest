@@ -5,6 +5,10 @@ let isSquatting = false;
 const targetSquats = 100;
 let cameraStream = null;
 let isTracking = false;
+let initializationAttempt = 0; // Счетчик попыток инициализации
+
+// Добавьте константу для максимального числа попыток
+const MAX_INIT_ATTEMPTS = 3;
 
 // Настройки для мобильных устройств
 const mobileSettings = {
@@ -124,7 +128,7 @@ function detectSquat(pose) {
 }
 
 async function trackSquats() {
-	if (!video || video.paused || !isTracking) return;
+	if (!isTracking || !video || video.paused) return;
 
 	try {
 		const pose = await poseNet.estimateSinglePose(video);
@@ -132,7 +136,10 @@ async function trackSquats() {
 		requestAnimationFrame(trackSquats);
 	} catch (err) {
 		console.error("Ошибка трекинга:", err);
-		showError("Ошибка отслеживания. Нажмите чтобы перезапустить.");
+		// Перезапуск вместо показа ошибки
+		if (isTracking) {
+			init();
+		}
 	}
 }
 
@@ -157,6 +164,7 @@ function showError(message) {
 
 	errorBox.addEventListener("click", () => {
 		document.body.removeChild(errorBox);
+		initializationAttempt = 0; // Сброс счетчика
 		init();
 	});
 }
@@ -164,6 +172,7 @@ function showError(message) {
 async function init() {
 	cleanup();
 	isTracking = true;
+	initializationAttempt++;
 
 	try {
 		// Проверка безопасного контекста
@@ -173,11 +182,28 @@ async function init() {
 
 		video = await setupCamera();
 		poseNet = await loadPoseNetModel();
+
+		// Проверка успешной загрузки модели
+		if (!poseNet) {
+			throw new Error("Модель не загружена");
+		}
+
+		// Проверка состояния видео
+		if (video.paused || video.ended) {
+			throw new Error("Видеопоток не активен");
+		}
+
 		trackSquats();
 	} catch (err) {
 		isTracking = false;
-		console.error("Инициализация не удалась:", err);
-		showError("Ошибка инициализации. Нажмите чтобы перезапустить.");
+		console.error(`Попытка ${initializationAttempt}:`, err);
+
+		if (initializationAttempt < MAX_INIT_ATTEMPTS) {
+			// Повторная попытка через 1 секунду
+			setTimeout(init, 1000);
+		} else {
+			showError("Ошибка инициализации. Нажмите чтобы перезапустить.");
+		}
 	}
 }
 
